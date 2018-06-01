@@ -75,6 +75,12 @@ architecture behavioral of wb_tx_core is
 			tx_clk_i		: in  std_logic;
 			tx_data_o		: out std_logic;
 			tx_enable_i		: in std_logic;
+                    
+            -- Word Looper
+            loop_pulse_i    : in std_logic;
+            loop_mode_i     : in std_logic;
+            loop_word_i     : in std_logic_vector(511 downto 0);
+            loop_word_bytes_i : in std_logic_vector(7 downto 0);
 			
 			-- Status
 			tx_underrun_o	: out std_logic;
@@ -90,15 +96,15 @@ architecture behavioral of wb_tx_core is
 			rst_n_i	: in  std_logic;
 			
 			-- Serial Trigger Out
-			trig_o : out std_logic;
+			--trig_o : out std_logic;
 			trig_pulse_o : out std_logic;
 			
 			-- Trigger In (async)
 			ext_trig_i	: in std_logic;
 			
 			-- Config
-			trig_word_i : in std_logic_vector(127 downto 0); -- Trigger command
-			trig_word_length_i : in std_logic_vector(31 downto 0); -- Trigger command length
+			--trig_word_i : in std_logic_vector(127 downto 0); -- Trigger command
+			--trig_word_length_i : in std_logic_vector(31 downto 0); -- Trigger command length
 			trig_freq_i : in std_logic_vector(31 downto 0); -- Number of clock cycles between triggers
 			trig_time_i : in std_logic_vector(63 downto 0); -- Clock cycles
 			trig_count_i : in std_logic_vector(31 downto 0); -- Fixed number of triggers
@@ -134,7 +140,8 @@ architecture behavioral of wb_tx_core is
 	signal trig_en : std_logic;
 	signal trig_done : std_logic;
 	signal trig_word_length : std_logic_vector(31 downto 0);
-	signal trig_word : std_logic_vector(127 downto 0);
+	signal trig_word : std_logic_vector(511 downto 0);
+	signal trig_word_pointer : unsigned(3 downto 0);
     
     -- Trig input freq counter
     signal ext_trig_t1 : std_logic;
@@ -179,6 +186,7 @@ begin
             trig_time_l_d <= (others => '0');
             trig_count <= (others => '0');
             trig_word <= (others => '0');
+            trig_word_pointer <= (others => '0');
             trig_abort <= '0';
             trig_in_freq_d <= (others => '0');
 		elsif rising_edge(wb_clk_i) then
@@ -220,17 +228,11 @@ begin
 						when x"A" => -- Set trigger word length (bits)
 							trig_word_length <= wb_dat_i;
 							wb_ack_o <= '1';
-						when x"B" => -- Set trigger word [31:0]
-							trig_word(31 downto 0) <= wb_dat_i;
+						when x"B" => -- Set trigger word as specified in pointer
+							trig_word(((to_integer(trig_word_pointer)+1)*32)-1 downto (to_integer(trig_word_pointer))*32) <= wb_dat_i;
 							wb_ack_o <= '1';
-						when x"C" => -- Set trigger word [63:32]
-							trig_word(63 downto 32) <= wb_dat_i;
-							wb_ack_o <= '1';
-						when x"D" => -- Set trigger word [95:64]
-							trig_word(95 downto 64) <= wb_dat_i;
-							wb_ack_o <= '1';
-						when x"E" => -- Set trigger word [127:96]
-							trig_word(127 downto 96) <= wb_dat_i;
+						when x"C" => -- Set trigger word pointer
+							trig_word_pointer <= unsigned(wb_dat_i(3 downto 0));
 							wb_ack_o <= '1';
 						when x"F" => -- Toggle trigger abort
 							trig_abort <= wb_dat_i(0);
@@ -273,17 +275,12 @@ begin
 						when x"A" => -- Set trigger word length (bits)
 							wb_dat_o <= trig_word_length;
 							wb_ack_o <= '1';
-						when x"B" => -- Set trigger word [31:0]
-							wb_dat_o <= trig_word(31 downto 0);
+						when x"B" =>
+							wb_dat_o <= trig_word(((to_integer(trig_word_pointer)+1)*32)-1 downto (to_integer(trig_word_pointer))*32);
 							wb_ack_o <= '1';
-						when x"C" => -- Set trigger word [63:32]
-							wb_dat_o <= trig_word(63 downto 32);
-							wb_ack_o <= '1';
-						when x"D" => -- Set trigger word [95:64]
-							wb_dat_o <= trig_word(95 downto 64);
-							wb_ack_o <= '1';
-						when x"E" => -- Set trigger word [127:96]
-							wb_dat_o <= trig_word(127 downto 96);
+						when x"C" =>
+                            wb_dat_o <= (others => '0');
+							wb_dat_o(3 downto 0) <= std_logic_vector(trig_word_pointer);
 							wb_ack_o <= '1';
 						when x"F" => -- Trigger in frequency
 							wb_dat_o <= trig_in_freq_d;
@@ -310,6 +307,11 @@ begin
 			tx_clk_i => tx_clk_i,
 			tx_data_o => tx_data_cmd(I),
 			tx_enable_i => tx_enable(I),
+			-- Looper
+			loop_pulse_i => tx_trig_pulse,
+			loop_mode_i => trig_en,
+			loop_word_i => trig_word,
+			loop_word_bytes_i => trig_word_length(7 downto 0),
 			-- Status
 			tx_underrun_o => tx_underrun(I),
 			tx_overrun_o => tx_overrun(I),
@@ -322,11 +324,11 @@ begin
 			if (rst_n_i = '0') then
 				tx_data_o(I) <= '0';
 			elsif rising_edge(tx_clk_i) then
-				if (tx_enable(I) = '1' and trig_en = '1') then
-					tx_data_o(I) <= tx_data_trig;
-				else
+				--if (tx_enable(I) = '1' and trig_en = '1') then
+				--	tx_data_o(I) <= tx_data_trig;
+				--else
 					tx_data_o(I) <= tx_data_cmd(I);
-				end if;
+				--end if;
 			end if;
 		end process;
 	end generate tx_channels;
@@ -336,13 +338,13 @@ begin
 		clk_i => tx_clk_i,
 		rst_n_i => rst_n_i,
 		-- Serial Trigger Out
-		trig_o => tx_data_trig,
+		--trig_o => tx_data_trig,
 		trig_pulse_o=> tx_trig_pulse,
 		-- Trigger In (async)
 		ext_trig_i => ext_trig_i,
 		-- Config
-		trig_word_i => trig_word,
-		trig_word_length_i => trig_word_length,
+		--trig_word_i => trig_word,
+		--trig_word_length_i => trig_word_length,
 		trig_freq_i => trig_freq,
 		trig_time_i => trig_time,
 		trig_count_i => trig_count,
