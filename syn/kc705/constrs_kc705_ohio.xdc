@@ -133,3 +133,30 @@ set_property IOSTANDARD LVCMOS25 [get_ports {sdi_i}]
 
 set_property IOSTANDARD LVCMOS25 [get_ports {sda_io}]
 set_property IOSTANDARD LVCMOS25 [get_ports {scl_io}]
+
+##########################
+# Fix below for KC705!!
+##########################
+set_property PACKAGE_PIN AC24 [get_ports {ext_trig_i_p[0]}]
+set_property PACKAGE_PIN AD24 [get_ports {ext_trig_i_n[0]}]
+
+set_property PACKAGE_PIN AB27 [get_ports {ext_trig_i_p[1]}]
+set_property PACKAGE_PIN AC27 [get_ports {ext_trig_i_n[1]}]
+
+set_property PACKAGE_PIN AD27 [get_ports {ext_trig_i_p[2]}]
+set_property PACKAGE_PIN AD28 [get_ports {ext_trig_i_n[2]}]
+
+set_property PACKAGE_PIN AJ26 [get_ports {ext_trig_i_p[3]}]
+set_property PACKAGE_PIN AK26 [get_ports {ext_trig_i_n[3]}]
+
+set_property PACKAGE_PIN AG27 [get_ports {eudet_trig_p}]
+set_property PACKAGE_PIN AG28 [get_ports {eudet_trig_n}]
+
+set_property PACKAGE_PIN AJ27 [get_ports {eudet_busy_p}]
+set_property PACKAGE_PIN AK28 [get_ports {eudet_busy_n}]
+
+set_property PACKAGE_PIN AH26 [get_ports {eudet_clk_p}]
+set_property PACKAGE_PIN AH27 [get_ports {eudet_clk_n}]
+
+set_property IOSTANDARD LVDS_25 [get_ports ext_trig_*]
+set_property IOSTANDARD LVDS_25 [get_ports eudet_*]
