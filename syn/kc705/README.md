@@ -21,12 +21,11 @@ This project is the fork of YARR for testing communication using KC705 Evaluatio
 
 Target Device:
 - [Kintex-7 KC705 Evaluation Platform](https://www.xilinx.com/products/boards-and-kits/ek-k7-kc705-g.html)
-- (Future support)[Virtex-7 VC707 Evaluation Platform](https://www.xilinx.com/products/boards-and-kits/ek-v7-vc707-g.html)
 
-Software:
+Firmware:
 - Langurage : VHDL
 
-- Xilinx Vivado 2017.1 or later version
+- Xilinx Vivado 2016.2 (or later versions)
 
     Xilinx IP cores
     - [Clocking Wizard](https://japan.xilinx.com/products/intellectual-property/clocking_wizard.html)
@@ -42,10 +41,16 @@ Software:
 
 Two ways.
 
-- Configure ready_to_test/ddr3_kc705.mcs
-    - FMC-LPC supports [VHDCI_to_8xRJ45_FE_I4_Rev_A](https://twiki.cern.ch/twiki/bin/view/Main/TimonHeim?forceShow=1#VHDCI_to_8xRJ45_FE_I4_Rev_A)
-- Rebuild your vivado project. 
-    - If the above way does not work, I recommend this way. Please report your problem.
+- Configure ready_to_test .bit or .mcs.
+    - bram_fei4_octa_revA
+        - FMC-LPC supports [VHDCI_to_8xRJ45_FE_I4_Rev_A](https://twiki.cern.ch/twiki/bin/view/Main/TimonHeim?forceShow=1#VHDCI_to_8xRJ45_FE_I4_Rev_A)
+    - ddr3_fei4_octa_revA
+        - Same as above but using DDR3 for an internal buffer. Experimental. Only providing a .bit file.
+    - bram_fei4_single_osaka
+        - FMC-LPC attached with TB-FMCL-PH with the custom Osaka single chip adapter (contact hirose@champ.hep.sci.osaka-u.ac.jp).
+
+- Rebuild your vivado project.
+    - Execute mkproject.sh in your desired version among above.
 
 <a name="licence"></a>
 
