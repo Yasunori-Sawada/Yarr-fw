@@ -1076,7 +1076,45 @@ if {[string equal [get_filesets -quiet constrs_1] ""]} {
 # Set 'constrs_1' fileset object
 set obj [get_filesets constrs_1]
 
-# Empty (no sources present)
+# Add/Import constrs file and set constrs file properties
+set file "[file normalize "$origin_dir/../constrs_kc705_timing.xdc"]"
+set file_added [add_files -norecurse -fileset $obj $file]
+set file "$origin_dir/../constrs_kc705_timing.xdc"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets constrs_1] [list "*$file"]]
+set_property "file_type" "XDC" $file_obj
+
+# Add/Import constrs file and set constrs file properties
+set file "[file normalize "$origin_dir/../constrs_kc705_ddr3.xdc"]"
+set file_added [add_files -norecurse -fileset $obj $file]
+set file "$origin_dir/../constrs_kc705_ddr3.xdc"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets constrs_1] [list "*$file"]]
+set_property "file_type" "XDC" $file_obj
+
+# Add/Import constrs file and set constrs file properties
+set file "[file normalize "$origin_dir/../constrs_kc705.xdc"]"
+set file_added [add_files -norecurse -fileset $obj $file]
+set file "$origin_dir/../constrs_kc705.xdc"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets constrs_1] [list "*$file"]]
+set_property "file_type" "XDC" $file_obj
+
+# Add/Import constrs file and set constrs file properties
+set file "[file normalize "$origin_dir/../constrs_kc705_ila.xdc"]"
+set file_added [add_files -norecurse -fileset $obj $file]
+set file "$origin_dir/../constrs_kc705_ila.xdc"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets constrs_1] [list "*$file"]]
+set_property "file_type" "XDC" $file_obj
+
+# Add/Import constrs file and set constrs file properties
+set file "[file normalize "$origin_dir/../constrs_kc705_ohio.xdc"]"
+set file_added [add_files -norecurse -fileset $obj $file]
+set file "$origin_dir/../constrs_kc705_ohio.xdc"
+set file [file normalize $file]
+set file_obj [get_files -of_objects [get_filesets constrs_1] [list "*$file"]]
+set_property "file_type" "XDC" $file_obj
 
 # Set 'constrs_1' fileset properties
 set obj [get_filesets constrs_1]
@@ -1156,7 +1194,7 @@ puts "INFO: Finished making a project for KC705"
 
 #Synthesize
 reset_run synth_1
-launch_runs synth_1
+launch_runs synth_1 -jobs 4
 wait_on_run synth_1
 set result [get_property STATUS [get_runs synth_1]]
 set keyword [lindex [split $result  ] end]
@@ -1168,7 +1206,7 @@ puts "INFO: Synthesize done!!"
 
 #Implementation
 reset_run impl_1
-launch_runs impl_1
+launch_runs impl_1 -jobs 4
 wait_on_run impl_1
 set result [get_property STATUS [get_runs impl_1]]
 set keyword [lindex [split $result  ] end]
@@ -1177,5 +1215,11 @@ exit 1
 }
 
 puts "INFO: Implementation done!!"
+
+open_run impl_1
+write_bitstream -force $origin_dir/test.bit
+write_cfgmem -force -format mcs -size 128 -interface BPIx16 -loadbit "up 0x00000000 $origin_dir/test.bit" -file $origin_dir/test.mcs
+
+puts "INFO: Made test.bit and test.mcs files."
 
 exit
