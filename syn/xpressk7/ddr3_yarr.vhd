@@ -431,7 +431,7 @@ begin
       
       app_0:app
       Generic map(
-	DEBUG_C => "1110",
+	DEBUG_C => "0000",
 	address_mask_c => X"000FFFFF",
 	DMA_MEMORY_SELECTED => "DDR3" -- DDR3, BRAM, DEMUX 
       )
