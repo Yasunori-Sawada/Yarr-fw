@@ -125,6 +125,17 @@ entity app is
            fe_cmd_n        : out std_logic_vector(c_TX_CHANNELS-1 downto 0);
            fe_data_p        : in  std_logic_vector(c_RX_CHANNELS-1 downto 0);
            fe_data_n        : in  std_logic_vector(c_RX_CHANNELS-1 downto 0);
+
+           -- GTX for testing
+           USER_SMA_GPIO_P   : out std_logic;
+           USER_SMA_GPIO_N   : out std_logic;
+           GTX_RXN_IN        : in  std_logic;
+           GTX_RXP_IN        : in  std_logic;
+           GTREFCLK_PAD_N_IN : in  std_logic;
+           GTREFCLK_PAD_P_IN : in  std_logic;
+           TEST_P_OUT        : out std_logic; --FMC LPC : LN26_P
+           TEST_N_OUT        : out std_logic; --FMC LPC : LN26_N
+
            -- I2c
            sda_io                : inout std_logic;
            scl_io                    : inout std_logic;
@@ -152,6 +163,43 @@ architecture Behavioral of app is
     
     --constant c_TX_CHANNELS : integer := g_TX_CHANNELS;
     --constant c_RX_CHANNELS : integer := g_RX_CHANNELS;
+
+
+
+--^^^^^^^^^^^^^^^^^^^^^^^^^ Component Declarations ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+    component sma_gtx_with_nidru
+      port
+        (
+          --------------------
+          -- System
+          --------------------
+          SYS_CLK_p       : in  std_logic;  --200MHz
+          SYS_CLK_n       : in  std_logic;
+          USER_SMA_GPIO_P : out std_logic;  --156.25MHz
+          USER_SMA_GPIO_N : out std_logic;
+          RESET           : in  std_logic;
+
+          --------------------
+          -- GTX Ports
+          --------------------
+          GTX_RXN_IN        : in std_logic;
+          GTX_RXP_IN        : in std_logic;
+          GTREFCLK_PAD_N_IN : in std_logic;
+          GTREFCLK_PAD_P_IN : in std_logic;
+
+          -------------------------
+          -- Probes for debugging
+          -------------------------
+          TEST_P_OUT : out std_logic;       --FMC LPC : LN26_P
+          TEST_N_OUT : out std_logic;       --FMC LPC : LN26_N
+          LED_CHKOUT : out std_logic_vector(7 downto 0)
+          );
+    end component;
+
+--vvvvvvvvvvvvvvvvvvvvvvv END Component Declarations vvvvvvvvvvvvvvvvvvvvvvvvvv
+
+
   
     ------------------------------------------------------------------------------
     -- Signals declaration
@@ -919,20 +967,20 @@ end generate;
      
   end generate dma_bram_gen;
 
-  clk200_gen : if DMA_MEMORY_SELECTED = "BRAM" generate
+  --clk200_gen : if DMA_MEMORY_SELECTED = "BRAM" generate
   
-   --LVDS input to internal single
-    CLK_IBUFDS : IBUFDS
-    generic map(
-      IOSTANDARD => "DEFAULT"
-    )
-    port map(
-      I  => sys_clk_p_i,
-      IB => sys_clk_n_i,
-      O  => open
-    );
+  -- --LVDS input to internal single
+  --  CLK_IBUFDS : IBUFDS
+  --  generic map(
+  --    IOSTANDARD => "DEFAULT"
+  --  )
+  --  port map(
+  --    I  => sys_clk_p_i,
+  --    IB => sys_clk_n_i,
+  --    O  => open
+  --  );
   
-  end generate clk200_gen;
+  --end generate clk200_gen;
 
   dma_ddr3_gen : if DMA_MEMORY_SELECTED = "DDR3" generate
   cmp_ddr3_ctrl_wb : ddr3_ctrl_wb
@@ -1210,5 +1258,40 @@ end generate;
 
       );
    end generate dbg_3;
+
+
+
+----------------------------------------------
+---------------- GTX Testing -----------------
+----------------------------------------------
+
+
+  sma_gtx_with_nidru_inst : sma_gtx_with_nidru
+    port map
+    (
+      --------------------
+      -- System
+      --------------------
+      SYS_CLK_p       => sys_clk_p_i,
+      SYS_CLK_n       => sys_clk_n_i,
+      USER_SMA_GPIO_P => USER_SMA_GPIO_P,
+      USER_SMA_GPIO_N => USER_SMA_GPIO_N,
+      RESET           => '0',
+
+      --------------------
+      -- GTX Ports
+      --------------------
+      GTX_RXN_IN        => GTX_RXN_IN,
+      GTX_RXP_IN        => GTX_RXP_IN,
+      GTREFCLK_PAD_N_IN => GTREFCLK_PAD_N_IN,
+      GTREFCLK_PAD_P_IN => GTREFCLK_PAD_P_IN,
+
+      -------------------------
+      -- Probes for debugging
+      -------------------------
+      TEST_P_OUT => TEST_P_OUT,
+      TEST_N_OUT => TEST_N_OUT,
+      LED_CHKOUT => open
+      );
   
 end Behavioral;

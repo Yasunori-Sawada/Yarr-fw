@@ -28,6 +28,11 @@ set_property LOC GTXE2_CHANNEL_X0Y4 [get_cells {pcie_0/U0/inst/gt_top_i/pipe_wra
 set_property PACKAGE_PIN T6 [get_ports {pci_exp_rxp[3]}]
 set_property PACKAGE_PIN T5 [get_ports {pci_exp_rxn[3]}]
 
+
+# SMA-GTX
+set_property LOC GTXE2_CHANNEL_X0Y8 [get_cells app_0/sma_gtx_with_nidru_inst/gtwizard_rxonly_support_i/gtwizard_rxonly_init_i/U0/gtwizard_rxonly_i/gt0_gtwizard_rxonly_i/gtxe2_i]
+
+
 ## GPIO PUSHBUTTON SW
 
 # Bank: 18 - IO_0_18
@@ -127,9 +132,19 @@ set_property PACKAGE_PIN AC9 [get_ports {usr_led_o[2]}]
 ## GPIO USER SMA
 
 # Bank: 12 - IO_L1P_T0_12
-#set_property PACKAGE_PIN Y24 [get_ports SMA_N]
-#set_property IOSTANDARD LVCMOS25 [get_ports SMA_N]
+set_property PACKAGE_PIN Y24 [get_ports USER_SMA_GPIO_N]
+set_property IOSTANDARD LVDS_25 [get_ports USER_SMA_GPIO_N]
 
 # Bank: 12 - IO_L1N_T0_12
-#set_property PACKAGE_PIN Y23 [get_ports SMA_P]
-#set_property IOSTANDARD LVCMOS25 [get_ports SMA_P]
+set_property PACKAGE_PIN Y23 [get_ports USER_SMA_GPIO_P]
+set_property IOSTANDARD LVDS_25 [get_ports USER_SMA_GPIO_P]
+
+# SMA-GTX Reference clock
+set_property PACKAGE_PIN J8 [get_ports GTREFCLK_PAD_P_IN]
+set_property PACKAGE_PIN J7 [get_ports GTREFCLK_PAD_N_IN]
+
+# Test output
+set_property PACKAGE_PIN AK29 [get_ports TEST_P_OUT]
+set_property PACKAGE_PIN AK30 [get_ports TEST_N_OUT]
+set_property IOSTANDARD LVCMOS25 [get_ports TEST_P_OUT]
+set_property IOSTANDARD LVCMOS25 [get_ports TEST_N_OUT]

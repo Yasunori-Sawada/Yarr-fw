@@ -64,7 +64,18 @@ entity top_level is
             fe_cmd_p        : out std_logic_vector(c_TX_CHANNELS-1 downto 0);
             fe_cmd_n        : out std_logic_vector(c_TX_CHANNELS-1 downto 0);
             fe_data_p        : in  std_logic_vector(c_RX_CHANNELS-1 downto 0);
-            fe_data_n        : in  std_logic_vector(c_RX_CHANNELS-1 downto 0)--;
+            fe_data_n        : in  std_logic_vector(c_RX_CHANNELS-1 downto 0);--;
+
+            -- GTX for testing
+            USER_SMA_GPIO_P   : out std_logic;
+            USER_SMA_GPIO_N   : out std_logic;
+            GTX_RXN_IN        : in  std_logic;
+            GTX_RXP_IN        : in  std_logic;
+            GTREFCLK_PAD_N_IN : in  std_logic;
+            GTREFCLK_PAD_P_IN : in  std_logic;
+            TEST_P_OUT        : out std_logic; --FMC LPC : LN26_P
+            TEST_N_OUT        : out std_logic  --FMC LPC : LN26_N
+
             -- I2c
             --sda_io                : inout std_logic;
             --scl_io                    : inout std_logic;
@@ -92,8 +103,9 @@ end top_level;
 architecture Behavioral of top_level is
     
     constant AXI_BUS_WIDTH : integer := 64;
-    
-    
+
+
+--^^^^^^^^^^^^^^^^^^^^^^^^^ Component Declarations ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     
     COMPONENT pcie_7x_0
       PORT (
@@ -270,6 +282,17 @@ architecture Behavioral of top_level is
                 fe_cmd_n        : out std_logic_vector(c_TX_CHANNELS-1 downto 0);
                 fe_data_p        : in  std_logic_vector(c_RX_CHANNELS-1 downto 0);
                 fe_data_n        : in  std_logic_vector(c_RX_CHANNELS-1 downto 0);
+
+                -- GTX for testing
+                USER_SMA_GPIO_P   : out std_logic;
+                USER_SMA_GPIO_N   : out std_logic;
+                GTX_RXN_IN        : in  std_logic;
+                GTX_RXP_IN        : in  std_logic;
+                GTREFCLK_PAD_N_IN : in  std_logic;
+                GTREFCLK_PAD_P_IN : in  std_logic;
+                TEST_P_OUT        : out std_logic; --FMC LPC : LN26_P
+                TEST_N_OUT        : out std_logic; --FMC LPC : LN26_N
+
                 -- I2c
                 sda_io                : inout std_logic;
                 scl_io                    : inout std_logic;
@@ -282,9 +305,11 @@ architecture Behavioral of top_level is
     end component;
     
     
-
+--vvvvvvvvvvvvvvvvvvvvvvv END Component Declarations vvvvvvvvvvvvvvvvvvvvvvvvvv
     
 
+
+--^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Wire Declarations ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     
     --Clocks
     signal sys_clk : STD_LOGIC;
@@ -337,6 +362,9 @@ architecture Behavioral of top_level is
     
     --PCIE debug
     signal cfg_dstatus_s : STD_LOGIC_VECTOR(15 DOWNTO 0);
+
+ --vvvvvvvvvvvvvvvvvvvvvvvvvv END Wire Declarations vvvvvvvvvvvvvvvvvvvvvvvvvvvv
+
     
 begin
 
@@ -507,6 +535,17 @@ begin
         fe_cmd_n          => fe_cmd_n,
         fe_data_p         => fe_data_p,
         fe_data_n         => fe_data_n,
+
+        -- GTX for testing
+        USER_SMA_GPIO_P   => USER_SMA_GPIO_P,
+        USER_SMA_GPIO_N   => USER_SMA_GPIO_N,
+        GTX_RXN_IN        => GTX_RXN_IN,
+        GTX_RXP_IN        => GTX_RXP_IN,
+        GTREFCLK_PAD_N_IN => GTREFCLK_PAD_N_IN,
+        GTREFCLK_PAD_P_IN => GTREFCLK_PAD_P_IN,
+        TEST_P_OUT        => TEST_P_OUT,
+        TEST_N_OUT        => TEST_N_OUT,
+
         -- I2c
         --sda_io            => sda_io,
         --scl_io            => scl_io,
