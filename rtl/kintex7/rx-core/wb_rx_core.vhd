@@ -44,7 +44,11 @@ entity wb_rx_core is
 		rx_data_o : out std_logic_vector(31 downto 0);
 		busy_o : out std_logic;
 		
-		debug_o : out std_logic_vector(31 downto 0)
+		debug_o : out std_logic_vector(31 downto 0);
+
+                --GTX test
+                gt_rx_data_i       : in std_logic_vector(19 downto 0);
+                gt_rx_data_valid_i : in std_logic
 	);
 end wb_rx_core;
 
@@ -95,7 +99,33 @@ architecture behavioral of wb_rx_core is
 			rx_data_raw_o : out std_logic_vector(7 downto 0)
 		);
 	end component;
-	
+
+        component gt_rx_channel
+          generic
+            (
+              NO_DEBUGCORES : boolean := true
+              );
+          port
+            (
+              -- Sys connect
+              rst_n_i   : in std_logic;
+              rx_clk_i : in std_logic;
+
+              enable_i : in std_logic;
+
+              -- Input
+              gt_rx_data_i       : in std_logic_vector(19 downto 0);  --((WDT_OUT -1) downto 0);
+              gt_rx_data_valid_i : in std_logic;
+              trig_tag_i         : in std_logic_vector(31 downto 0);
+
+              -- Output
+              rx_data_o     : out std_logic_vector(25 downto 0);
+              rx_valid_o    : out std_logic;
+              rx_stat_o     : out std_logic_vector(7 downto 0);
+              rx_data_raw_o : out std_logic_vector(7 downto 0)
+              );
+        end component;
+
 	COMPONENT rx_channel_fifo
 		PORT (
 			rst : IN STD_LOGIC;
@@ -201,7 +231,7 @@ begin
 	
 	-- Generate Rx Channels
 	busy_o <= '0' when (rx_fifo_full = c_ALL_ZEROS) else '1';
-	rx_channels: for I in 0 to g_NUM_RX-1 generate
+	rx_channels: for I in 1 to g_NUM_RX-1 generate
 	begin
 		cmp_fei4_rx_channel: fei4_rx_channel PORT MAP(
 			rst_n_i => rst_n_i,
@@ -230,5 +260,47 @@ begin
 			empty => rx_fifo_empty(I)
 		);
 	end generate;
+
+
+        gt_rx_channel_i : gt_rx_channel
+          generic map
+          (
+            NO_DEBUGCORES => false
+            )
+          port map
+          (
+            -- Sys connect
+            rst_n_i   => rst_n_i,
+            rx_clk_i => rx_clk_i,
+
+            enable_i => rx_enable(0),
+
+            -- Input
+            gt_rx_data_i       => gt_rx_data_i,
+            gt_rx_data_valid_i => gt_rx_data_valid_i,
+            trig_tag_i         => trig_tag_i,
+
+            -- Output
+            rx_data_o     => rx_data(0),
+            rx_valid_o    => rx_valid(0),
+            rx_stat_o     => rx_stat(0),
+            rx_data_raw_o => rx_data_raw(0)
+            );
+
+        rx_fifo_din(0) <= STD_LOGIC_VECTOR(TO_UNSIGNED(0,6)) & rx_data(0);
+        rx_fifo_wren(0) <= rx_valid(0) and rx_enable(0);
+        cmp_rx_channel_fifo : rx_channel_fifo PORT MAP (
+          rst => not rst_n_i,
+          wr_clk => rx_clk_i,
+          rd_clk => wb_clk_i,
+          din => rx_fifo_din(0),
+          wr_en => rx_fifo_wren(0),
+          rd_en => rx_fifo_rden(0),
+          dout => rx_fifo_dout(0),
+          full => rx_fifo_full(0),
+          empty => rx_fifo_empty(0)
+          );
+
+
 end behavioral;
 

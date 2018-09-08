@@ -514,7 +514,10 @@ package app_pkg is
             rx_valid_o : out std_logic;
             rx_data_o : out std_logic_vector(31 downto 0);
             busy_o : out std_logic;
-            debug_o : out std_logic_vector(31 downto 0)
+            debug_o : out std_logic_vector(31 downto 0);
+            --GTX test
+            gt_rx_data_i       : in std_logic_vector(19 downto 0);
+            gt_rx_data_valid_i : in std_logic
         );
     end component;
  

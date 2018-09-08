@@ -42,6 +42,7 @@ entity sma_gtx_with_nidru is
       --------------------
       SYS_CLK_p       : in  std_logic;  --200MHz
       SYS_CLK_n       : in  std_logic;
+      CLK_160M        : in  std_logic;
       USER_SMA_GPIO_P : out std_logic;  --156.25MHz
       USER_SMA_GPIO_N : out std_logic;
       RESET           : in  std_logic;
@@ -53,6 +54,13 @@ entity sma_gtx_with_nidru is
       GTX_RXP_IN        : in std_logic;
       GTREFCLK_PAD_N_IN : in std_logic;
       GTREFCLK_PAD_P_IN : in std_logic;
+
+      --------------------
+      -- FPGA Interface
+      --------------------
+      RX_CLK_OUT        : out std_logic;
+      RX_OUT            : out std_logic_vector(19 downto 0); --((WDT_OUT -1) downto 0);
+      RX_OUT_VALID      : out std_logic;
 
       -------------------------
       -- Probes for debugging
@@ -237,7 +245,7 @@ architecture Behavioral of sma_gtx_with_nidru is
 
   signal SYS_CLK_tmp : std_logic;
   signal SYS_CLK     : std_logic;
-  signal CLK_160M    : std_logic;
+  --signal CLK_160M    : std_logic;
 
   ------------------------------- Global Signals -----------------------------
   signal tied_to_ground_i : std_logic;
@@ -328,8 +336,6 @@ architecture Behavioral of sma_gtx_with_nidru is
 
   ---------------------------- GTX/FPGA Interface ----------------------------
   signal gtx_usrclk_i   : std_logic;
-  signal rxdata_valid_i : std_logic;
-  signal rxdata_out_i   : std_logic_vector((WDT_OUT -1) downto 0);
   signal txdata_in_i    : std_logic_vector(31 downto 0);
 
   ---------------------------------- DEBUG -----------------------------------
@@ -369,7 +375,7 @@ begin
       SYS_CLK_IN_n => SYS_CLK_n,
       -- Clock out ports
       CLK_100M_OUT => SYS_CLK,
-      CLK_160M_OUT => CLK_160M,
+      CLK_160M_OUT => open, --CLK_160M,
       -- Status and control signals
       reset        => RESET,
       locked       => open              --locked
@@ -500,8 +506,8 @@ begin
       RST        => '0',   --Controlled by VIO if NO_DEBUGCORES = false
       RST_FREQ   => '0',   --Controlled by VIO if NO_DEBUGCORES = false
       RECCLK_OUT => open,  --Monitored by VIO if NO_DEBUGCORES = false
-      DOUT_VALID => rxdata_valid_i,
-      DOUT       => rxdata_out_i,
+      DOUT_VALID => RX_OUT_VALID,
+      DOUT       => RX_OUT,
 
       --***** CONFIG PORTS *****
       G1   => (others => '0'),  --Controlled by VIO if NO_DEBUGCORES = false
@@ -511,6 +517,8 @@ begin
       --***** DEBUG PORTS *****
       ERR_DETECTED_IN => '0'            --detect_err_prbs_i
       );
+
+  RX_CLK_OUT <= gt0_rxusrclk_i;
 
 
 ----------------------------------------------

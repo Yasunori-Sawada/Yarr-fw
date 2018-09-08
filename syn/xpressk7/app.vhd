@@ -176,6 +176,7 @@ architecture Behavioral of app is
           --------------------
           SYS_CLK_p       : in  std_logic;  --200MHz
           SYS_CLK_n       : in  std_logic;
+          CLK_160M        : in  std_logic;
           USER_SMA_GPIO_P : out std_logic;  --156.25MHz
           USER_SMA_GPIO_N : out std_logic;
           RESET           : in  std_logic;
@@ -188,6 +189,13 @@ architecture Behavioral of app is
           GTREFCLK_PAD_N_IN : in std_logic;
           GTREFCLK_PAD_P_IN : in std_logic;
 
+          --------------------
+          -- FPGA Interface
+          --------------------
+          RX_CLK_OUT        : out std_logic;
+          RX_OUT            : out std_logic_vector(19 downto 0); --((WDT_OUT -1) downto 0);
+          RX_OUT_VALID      : out std_logic;
+
           -------------------------
           -- Probes for debugging
           -------------------------
@@ -196,6 +204,7 @@ architecture Behavioral of app is
           LED_CHKOUT : out std_logic_vector(7 downto 0)
           );
     end component;
+
 
 --vvvvvvvvvvvvvvvvvvvvvvv END Component Declarations vvvvvvvvvvvvvvvvvvvvvvvvvv
 
@@ -456,6 +465,12 @@ architecture Behavioral of app is
     signal debug       : std_logic_vector(31 downto 0);
     signal clk_div_cnt : unsigned(3 downto 0);
     signal clk_div     : std_logic;
+
+
+--***** GTX Testing *****
+    signal gt_rx_data_i       : std_logic_vector(19 downto 0);  --((WDT_OUT -1) downto 0);
+    signal gt_rx_data_valid_i : std_logic;
+
 
 begin
     
@@ -851,7 +866,9 @@ wb_dev_gen : if wb_dev_c = '1' generate
 		rx_data_o => rx_data,
         trig_tag_i => trig_tag_T,
 		busy_o => open,
-		debug_o => debug
+		debug_o => debug,
+                gt_rx_data_i => gt_rx_data_i,
+                gt_rx_data_valid_i => gt_rx_data_valid_i
 	);  
 
     
@@ -1274,6 +1291,7 @@ end generate;
       --------------------
       SYS_CLK_p       => sys_clk_p_i,
       SYS_CLK_n       => sys_clk_n_i,
+      CLK_160M        => clk_160_s,
       USER_SMA_GPIO_P => USER_SMA_GPIO_P,
       USER_SMA_GPIO_N => USER_SMA_GPIO_N,
       RESET           => '0',
@@ -1286,6 +1304,13 @@ end generate;
       GTREFCLK_PAD_N_IN => GTREFCLK_PAD_N_IN,
       GTREFCLK_PAD_P_IN => GTREFCLK_PAD_P_IN,
 
+      --------------------
+      -- FPGA Interface
+      --------------------
+      RX_CLK_OUT   => open,
+      RX_OUT       => gt_rx_data_i,
+      RX_OUT_VALID => gt_rx_data_valid_i,
+
       -------------------------
       -- Probes for debugging
       -------------------------
@@ -1293,5 +1318,6 @@ end generate;
       TEST_N_OUT => TEST_N_OUT,
       LED_CHKOUT => open
       );
-  
+
+
 end Behavioral;
