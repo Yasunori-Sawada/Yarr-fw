@@ -35,6 +35,12 @@ use UNISIM.VComponents.all;
 
 
 entity gt_rx_8b10b_alignment is
+  generic
+    (
+      DATA_IN_WIDTH  : integer range 1 to 20 := 20;
+      VALID_INTERVAL : integer               := 20
+      -- NOTICE : VALID_INTERVAL must be equal or more than DATA_IN_WIDTH/2
+      );
   port
     (
       --------------------
@@ -46,7 +52,7 @@ entity gt_rx_8b10b_alignment is
       --------------------
       -- Interface
       --------------------
-      DATA_IN       : in std_logic_vector(19 downto 0);  --((WDT_OUT -1) downto 0);
+      DATA_IN       : in std_logic_vector(DATA_IN_WIDTH-1 downto 0);
       DATA_IN_VALID : in std_logic;
 
       DATA_OUT       : out std_logic_vector(9 downto 0);
@@ -56,7 +62,8 @@ entity gt_rx_8b10b_alignment is
       --------------------
       -- DEBUG
       --------------------
-      SHIFTREGS_BITSLIP : out std_logic
+      ABNORMAL_INTERVAL : out std_logic;
+      BITSLIP_DATALOST  : out std_logic
       );
 end gt_rx_8b10b_alignment;
 
@@ -87,7 +94,7 @@ architecture Behavioral of gt_rx_8b10b_alignment is
 
 --^^^^^^^^^^^^^^^^^^^^^^^^^^^^ Wire Declarations ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-  signal data_sr_i       : std_logic_vector((20-1)+10+1 downto 0);  --((WDT_OUT -1)+10+1 downto 0);
+  signal data_sr_i       : std_logic_vector((DATA_IN_WIDTH-1)+11 downto 0);
   signal datashift_cnt_i : integer range 0 to 31 := 0;
 
   signal data_aligned_even_i : std_logic;
@@ -121,24 +128,32 @@ begin
     if RESET = '1' then
       data_sr_i         <= (others => '0');
       datashift_cnt_i   <= 0;
-      SHIFTREGS_BITSLIP <= '0';
+      ABNORMAL_INTERVAL <= '0';
+      BITSLIP_DATALOST  <= '0';
 
     elsif rising_edge(CLK_IN) then
       if DATA_IN_VALID = '1' then
-        data_sr_i(30 downto 11) <= DATA_IN;
-        datashift_cnt_i         <= 0;
-        if datashift_cnt_i = 19 then
-          SHIFTREGS_BITSLIP <= '0';
+        data_sr_i((DATA_IN_WIDTH-1)+11 downto 11) <= DATA_IN;
+        datashift_cnt_i                           <= 0;
+        if datashift_cnt_i = VALID_INTERVAL-1 then
+          ABNORMAL_INTERVAL <= '0';
         else
-          SHIFTREGS_BITSLIP <= '1';
+          ABNORMAL_INTERVAL <= '1';
+        end if;
+
+        if datashift_cnt_i < DATA_IN_WIDTH/2 then
+          BITSLIP_DATALOST <= '1';
+        else
+          BITSLIP_DATALOST <= '0';
         end if;
 
       else
-        if datashift_cnt_i < 10 then
-          data_sr_i(30 downto 0) <= "00" & data_sr_i(30 downto 2);
+        if datashift_cnt_i < DATA_IN_WIDTH/2 then
+          data_sr_i((DATA_IN_WIDTH-1)+11 downto 0) <= "00" & data_sr_i((DATA_IN_WIDTH-1)+11 downto 2);
         end if;
         datashift_cnt_i   <= datashift_cnt_i + 1;
-        SHIFTREGS_BITSLIP <= '0';
+        ABNORMAL_INTERVAL <= '0';
+        BITSLIP_DATALOST  <= '0';
       end if;
 
     end if;

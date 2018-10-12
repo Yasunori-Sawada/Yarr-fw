@@ -71,7 +71,8 @@ architecture behavioral of gt_rx_channel is
         --------------------
         -- DEBUG
         --------------------
-        SHIFTREGS_BITSLIP : out std_logic
+        ABNORMAL_INTERVAL : out std_logic;
+        BITSLIP_DATALOST  : out std_logic
         );
   end component;
 
@@ -105,6 +106,7 @@ architecture behavioral of gt_rx_channel is
         probe6 : in std_logic_vector(7 downto 0);
         probe7 : in std_logic_vector(7 downto 0);
         probe8 : in std_logic_vector(0 downto 0)
+        --probe9 : in std_logic_vector(0 downto 0)
         );
   end component;
 
@@ -151,9 +153,12 @@ architecture behavioral of gt_rx_channel is
   signal data_enc_valid_d : std_logic;
   signal data_enc_sync    : std_logic;
 
-  signal shiftregs_bitslip_s                : std_logic;
-  signal shiftregs_bitslip_s_ila            : std_logic_vector(0 downto 0);
-  attribute keep of shiftregs_bitslip_s_ila : signal is "true";
+  signal abnormal_interval_s                : std_logic;
+  signal abnormal_interval_s_ila            : std_logic_vector(0 downto 0);
+  attribute keep of abnormal_interval_s_ila : signal is "true";
+  signal bitslip_datalost_s                 : std_logic;
+  signal bitslip_datalost_s_ila             : std_logic_vector(0 downto 0);
+  attribute keep of bitslip_datalost_s_ila  : signal is "true";
 
   signal data_dec_value   : std_logic_vector(7 downto 0);
   signal data_dec_valid   : std_logic;
@@ -265,7 +270,8 @@ begin
       --------------------
       -- DEBUG
       --------------------
-      SHIFTREGS_BITSLIP => shiftregs_bitslip_s
+      ABNORMAL_INTERVAL => abnormal_interval_s,
+      BITSLIP_DATALOST  => bitslip_datalost_s
       );
 
 
@@ -298,7 +304,8 @@ begin
         probe5 => rx_valid_s_ila,
         probe6 => rx_stat_s,
         probe7 => rx_data_raw_s,
-        probe8 => shiftregs_bitslip_s_ila
+        probe8 => abnormal_interval_s_ila
+        --probe9 => bitslip_datalost_s_ila
         );
 
     rst_s_ila(0)               <= rst_s;
@@ -306,7 +313,8 @@ begin
     gt_rx_data_i_ila           <= gt_rx_data_i;
     gt_rx_data_valid_i_ila(0)  <= gt_rx_data_valid_i;
     rx_valid_s_ila(0)          <= rx_valid_s;
-    shiftregs_bitslip_s_ila(0) <= shiftregs_bitslip_s;
+    abnormal_interval_s_ila(0) <= abnormal_interval_s;
+    bitslip_datalost_s_ila(0)  <= bitslip_datalost_s;
 
   end generate WITH_DEBUGCORES;
 
@@ -317,7 +325,8 @@ begin
     gt_rx_data_i_ila           <= (others => '0');
     gt_rx_data_valid_i_ila(0)  <= '0';
     rx_valid_s_ila(0)          <= '0';
-    shiftregs_bitslip_s_ila(0) <= '0';
+    abnormal_interval_s_ila(0) <= '0';
+    bitslip_datalost_s_ila(0)  <= '0';
 
   end generate WITHOUT_DEBUGCORES;
 
