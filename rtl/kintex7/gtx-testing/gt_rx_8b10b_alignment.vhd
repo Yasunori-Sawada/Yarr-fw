@@ -197,13 +197,13 @@ begin
         end if;
 
         if databit_cnt_i = 8 then
-          if datashift_cnt_i <= 10 then
-            dout_valid_d1 <= '1';
-          end if;
+          dout_valid_d1 <= '1';
           databit_cnt_i <= 0;
         else
           dout_valid_d1 <= '0';
-          databit_cnt_i <= databit_cnt_i + 2;
+          if datashift_cnt_i < 10 then
+            databit_cnt_i <= databit_cnt_i + 2;
+          end if;
         end if;
 
       else
