@@ -25,13 +25,13 @@ architecture simulation of rx_64b66b_descrambler_tb is
 
   component gt_rx_64b66b_descrambler
     port (
-      CLK_IN            : in  std_logic;
-      RESET             : in  std_logic;
-      DATA_IN           : in  std_logic_vector(65 downto 0);  --((WDT_OUT -1) downto 0);
-      DATA_IN_VALID     : in  std_logic;  -- High width must be 1
-      DATA_OUT          : out std_logic_vector(63 downto 0);
-      DATA_OUT_VALID    : out std_logic;
-      DATA_OUT_SYNC     : out std_logic_vector(1 downto 0)
+      CLK_IN         : in  std_logic;
+      RESET          : in  std_logic;
+      DATA_IN        : in  std_logic_vector(65 downto 0);  --((WDT_OUT -1) downto 0);
+      DATA_IN_VALID  : in  std_logic;   -- High width must be 1
+      DATA_OUT       : out std_logic_vector(63 downto 0);
+      DATA_OUT_VALID : out std_logic;
+      SYNCHEADER_OUT : out std_logic_vector(1 downto 0)
       );
   end component gt_rx_64b66b_descrambler;
 
@@ -104,13 +104,13 @@ begin
 
   gt_rx_64b66b_descrambler_inst : gt_rx_64b66b_descrambler
     port map (
-      CLK_IN            => clk_s,
-      RESET             => rst_s,
-      DATA_IN           => data_in_s,
-      DATA_IN_VALID     => enable_s,
-      DATA_OUT          => data_out_1,
-      DATA_OUT_VALID    => open,
-      DATA_OUT_SYNC     => sync_info_1
+      CLK_IN         => clk_s,
+      RESET          => rst_s,
+      DATA_IN        => data_in_s,
+      DATA_IN_VALID  => enable_s,
+      DATA_OUT       => data_out_1,
+      DATA_OUT_VALID => open,
+      SYNCHEADER_OUT => sync_info_1
       );
 
   descrambler_cmp : descrambler

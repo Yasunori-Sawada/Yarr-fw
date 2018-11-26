@@ -51,7 +51,7 @@ entity gt_rx_64b66b_descrambler is
 
       DATA_OUT       : out std_logic_vector(63 downto 0);
       DATA_OUT_VALID : out std_logic;
-      DATA_OUT_SYNC  : out std_logic_vector(1 downto 0)
+      SYNCHEADER_OUT : out std_logic_vector(1 downto 0)
       );
 end gt_rx_64b66b_descrambler;
 
@@ -64,7 +64,7 @@ architecture Behavioral of gt_rx_64b66b_descrambler is
   signal scrambled_64bits_i : std_logic_vector(63 downto 0);
   signal temp_DATA_OUT_i    : std_logic_vector(63 downto 0);
 
-  signal scrambled_128bits_buf_i     : std_logic_vector(127 downto 0);
+  signal scrambled_128bits_buf_i : std_logic_vector(127 downto 0);
 
 --vvvvvvvvvvvvvvvvvvvvvvvvvv END Wire Declarations vvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
@@ -72,7 +72,7 @@ begin
 
 
   scrambled_64bits_i <= DATA_IN(63 downto 0);
-  DATA_OUT_SYNC      <= DATA_IN(65 downto 64);
+  SYNCHEADER_OUT     <= DATA_IN(65 downto 64);
 
 
   buffer_128bits : process(CLK_IN, RESET)
