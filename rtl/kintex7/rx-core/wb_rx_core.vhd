@@ -13,6 +13,7 @@
 library IEEE;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use ieee.std_logic_unsigned.all;
 
 library UNISIM;
 use UNISIM.VComponents.all;
@@ -69,7 +70,7 @@ architecture behavioral of wb_rx_core is
 
 	constant c_ALL_ZEROS : std_logic_vector(g_NUM_RX-1 downto 0) := (others => '0');
 	
-	component rr_arbiter
+	component rr_arbiter_with_idle
 		generic (
 			g_CHANNELS : integer := g_NUM_RX
 		);
@@ -77,12 +78,14 @@ architecture behavioral of wb_rx_core is
 			-- sys connect
 			clk_i : in std_logic;
 			rst_i : in std_logic;
+			-- enable channel
+			en_i  : in std_logic_vector(g_CHANNELS-1 downto 0);
 			-- requests
 			req_i : in std_logic_vector(g_CHANNELS-1 downto 0);
 			-- grants
 			gnt_o : out std_logic_vector(g_CHANNELS-1 downto 0)
 		);
-	end component rr_arbiter;
+	end component rr_arbiter_with_idle;
 
 	component fei4_rx_channel
 		port (
@@ -122,7 +125,8 @@ architecture behavioral of wb_rx_core is
         );
     end component aurora_rx_channel;
 	
-	COMPONENT rx_channel_fifo
+COMPONENT rx_channel_fifo
+--	COMPONENT distram_fifo
 		PORT (
 			rst : IN STD_LOGIC;
 			wr_clk : IN STD_LOGIC;
@@ -155,8 +159,8 @@ architecture behavioral of wb_rx_core is
 
 	signal rx_enable : std_logic_vector(31 downto 0);
 	signal rx_enable_d : std_logic_vector(31 downto 0);
-    signal rx_status : std_logic_vector(31 downto 0);
-    signal rx_status_s : std_logic_vector(31 downto 0);
+  signal rx_status : std_logic_vector(31 downto 0);
+  signal rx_status_s : std_logic_vector(31 downto 0);
 	
 	signal channel : integer range 0 to g_NUM_RX-1;
 
@@ -205,36 +209,46 @@ begin
 	end process wb_proc;
 	
 	-- Arbiter
-	cmp_rr_arbiter : rr_arbiter port map (
+	cmp_rr_arbiter : rr_arbiter_with_idle port map (
 		clk_i => wb_clk_i,
 		rst_i => not rst_n_i,
+--		en_i => rx_enable(g_NUM_RX-1 downto 0),
+		en_i => x"FF",
 		req_i => not rx_fifo_empty,
 		gnt_o => rx_fifo_rden_t
 	);
 	
-	--rx_valid_o <= '0' when (unsigned(rx_fifo_rden) = 0 or ((rx_fifo_rden and rx_fifo_empty) = rx_fifo_rden)) else '1';
+	--rx_valid_o <= '0'        when (unsigned(rx_fifo_rden) = 0 or ((rx_fifo_rden and rx_fifo_empty) = rx_fifo_rden)) else '1';
 	--rx_data_o <= x"DEADBEEF" when (unsigned(rx_fifo_rden) = 0) else rx_fifo_dout(log2_ceil(to_integer(unsigned(rx_fifo_rden))));
-	
+
 	reg_proc : process(wb_clk_i, rst_n_i)
 	begin
 		if (rst_n_i = '0') then
 			rx_fifo_rden <= (others => '0');
 			rx_valid_o <= '0';
+			rx_data_o <= x"DEADBEEFDEADBEEF";
 			channel <= 0;			
 		elsif rising_edge(wb_clk_i) then
 			rx_fifo_rden <= rx_fifo_rden_t;
 			channel <= log2_ceil(to_integer(unsigned(rx_fifo_rden_t)));
-			if (unsigned(rx_fifo_rden) = 0 or ((rx_fifo_rden and rx_fifo_empty) = rx_fifo_rden)) then
+--			if (unsigned(rx_fifo_rden) = 0 or ((rx_fifo_rden and rx_fifo_empty) = rx_fifo_rden)) then
+--			if (unsigned(rx_fifo_rden) = 0 or ((rx_fifo_rden and (not wb_dat_i(g_NUM_RX-1 downto 0))) = rx_fifo_rden)) then
+--			if (unsigned(rx_fifo_rden) = 0 or ((rx_fifo_rden and (not "00001111")) = rx_fifo_rden)) then
+			if (unsigned(rx_fifo_rden) = 0 or ((rx_fifo_rden and (not "00001111")) = rx_fifo_rden)) then
+--			if (unsigned(rx_fifo_rden) = 0) then
 				rx_valid_o <= '0';
 				rx_data_o <= x"DEADBEEFDEADBEEF";
-			else
+			elsif (not ((rx_fifo_rden and rx_fifo_empty) = rx_fifo_rden)) then
 				rx_valid_o <= '1';
 				rx_data_o <= rx_fifo_dout(channel);
+			else
+				rx_valid_o <= '1';
+				rx_data_o <= x"BAAAAAADBAAAAAAD";
 			end if;
 		end if;
 	end process reg_proc;
-    
-    fei4_iobuf: if g_TYPE = "FEI4" generate
+
+  fei4_iobuf: if g_TYPE = "FEI4" generate
         rx_loop: for I in 0 to (g_NUM_RX*g_NUM_LANES)-1 generate
         begin
             rx_buf : IBUFDS
@@ -302,6 +316,7 @@ begin
 		
 		rx_fifo_wren(I) <= rx_valid(I) and rx_enable_d(I);
 		cmp_rx_channel_fifo : rx_channel_fifo PORT MAP (
+--		cmp_rx_channel_fifo : distram_fifo PORT MAP (
 			rst => not rst_n_i,
 			wr_clk => rx_clk_i,
 			rd_clk => wb_clk_i,
